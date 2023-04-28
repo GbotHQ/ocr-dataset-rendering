@@ -1,0 +1,3 @@
+[submodule "src/Blender_3D_document_rendering_pipeline"]
+	path = src/Blender_3D_document_rendering_pipeline
+	url = https://github.com/GbotHQ/Blender-3D-document-rendering-pipeline.git

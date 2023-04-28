@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "ocr-dataset-rendering"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "ocr-dataset-rendering"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pillow = "^9.5.0"
+opencv-contrib-python = "^4.7.0.72"
+datasets = "^2.11.0"
+psutil = "^5.9.5"
+ipywidgets = "^8.0.6"
+gdown = "^4.7.1"
+fonttools = "^4.39.3"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+ipykernel = "^6.22.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
