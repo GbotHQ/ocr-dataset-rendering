@@ -30,19 +30,19 @@ class BaseBoundingBox:
         return self
 
     def astype(self, dtype):
-        bbox = copy.deepcopy(self)
+        bbox = self.copy()
         bbox.dtype = dtype
         bbox.points = self.points.astype(dtype)
         return bbox
 
     def relative(self, size, dtype=np.float32):
-        bbox = copy.deepcopy(self)
+        bbox = self.copy()
         bbox.dtype = dtype
         bbox.points = bbox.points.astype(bbox.dtype) / np.array(size, dtype)[None]
         return bbox
 
     def absolute(self, size, dtype=np.int32):
-        bbox = copy.deepcopy(self)
+        bbox = self.copy()
         bbox.dtype = dtype
         bbox.points = bbox.points.astype(bbox.dtype) * np.array(size, dtype)[None]
         return bbox
@@ -51,8 +51,11 @@ class BaseBoundingBox:
         simple = self.to_simple()
         return simple.get_size()
 
-    def draw(self, img):
-        return self.to_quad().draw(img)
+    def draw(self, img: np.ndarray, col: Tuple[int, int, int] = (255, 0, 0)) -> np.ndarray:
+        return self.to_quad().draw(img, col)
+    
+    def copy(self):
+        return copy.deepcopy(self)
 
 
 class SimpleBoundingBox(BaseBoundingBox):
@@ -62,7 +65,7 @@ class SimpleBoundingBox(BaseBoundingBox):
 
     def xxyy(self):
         x0, y0, x1, y1 = self.points.ravel()
-        return (x0, x1, y0, y1)
+        return np.array((x0, x1, y0, y1)).tolist()
 
     def to_quad(self):
         x0, y0, x1, y1 = self.points.ravel()
@@ -83,14 +86,16 @@ class QuadBoundingBox(BaseBoundingBox):
         )
 
     def remap(self, coords):
-        bbox = copy.deepcopy(self)
+        bbox = self.copy()
         for i in range(4):
             bbox.points[i] = remap_point(self.points[i][::-1], coords)
         return bbox
 
-    def draw(self, img):
+    def draw(self, img: np.ndarray, col: Tuple[int, int, int] = (255, 0, 0)) -> np.ndarray:
         points = self.points[:, ::-1]
-        img = cv.polylines(img, (points,), True, (255, 0, 255), 1, cv.LINE_AA)
+        img = img.copy()
+        img = cv.polylines(img, (points,), True, col, 1, cv.LINE_AA)
         for i in range(4):
-            img = cv.circle(img, points[i], 4, (255, 0, 255), -1)
+            img = cv.circle(img, points[i], 2, col, -1, cv.LINE_AA)
         return img
+

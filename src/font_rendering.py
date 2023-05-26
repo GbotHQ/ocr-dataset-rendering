@@ -3,13 +3,14 @@ import concurrent.futures
 from random import uniform, randint, random, choice
 import textwrap
 from colorsys import hls_to_rgb
-from bounding_box import SimpleBoundingBox
 
 from fontTools.ttLib import TTFont
 import numpy as np
 import cv2 as cv
 from PIL import Image, ImageFont, ImageDraw
 from PIL.Image import Resampling
+
+from bounding_box import SimpleBoundingBox
 
 
 def lerp(a, b, fac):
@@ -20,7 +21,10 @@ def pad_image(
     img: np.ndarray, padding: Tuple[int, int, int, int] = (0, 0, 0, 0), color: int = 255
 ):
     return np.pad(
-        img, (padding[:2], padding[2:], (0, 0)), mode="constant", constant_values=color
+        img,
+        ((padding[0], padding[2]), (padding[1], padding[3]), (0, 0)),
+        mode="constant",
+        constant_values=color,
     )
 
 
@@ -66,12 +70,39 @@ def apply_colors(color0, color1, alpha):
     return cv.cvtColor(img, cv.COLOR_RGB2BGR)
 
 
+def draw_text_aligned(draw, xy, text, font, align, **kwargs):
+    text_bbox_with_padding = draw.textbbox((0, 0), text, font=font)
+    line_offsets = []
+    for i, line in enumerate(text.split("\n")):
+        line_bbox_with_padding = draw.textbbox((0, 0), line, font=font)
+        bottom = draw.textbbox((0, 0), "\n" * i + line, font=font)[3]
+
+        if align == "left":
+            left_offset = 0
+        elif align == "center":
+            left_offset = round(
+                ((text_bbox_with_padding[2]) - (line_bbox_with_padding[2])) / 2
+            )
+        elif align == "right":
+            left_offset = text_bbox_with_padding[2] - line_bbox_with_padding[2]
+        else:
+            raise ValueError("Invalid align value")
+
+        line_offsets.append(left_offset)
+
+        top = bottom - line_bbox_with_padding[3]
+        anchor = (xy[0] + left_offset, xy[1] + top)
+        draw.text(anchor, line, font=font, align="left", **kwargs)
+
+    return line_offsets
+
+
 def render_text_mask(
     text: str,
     font: ImageFont,
     resolution: int,
     text_aspect_ratio: float,
-    alignment: str = "left",
+    align: str = "left",
 ) -> Tuple[str, np.ndarray]:
     text = wrap_text_to_match_aspect_ratio(text, font, text_aspect_ratio)
 
@@ -88,42 +119,12 @@ def render_text_mask(
     # render text
     alpha = Image.new("RGB", text_bbox.get_size().tolist(), color=(255, 255, 255))
     draw = ImageDraw.Draw(alpha)
-    draw.text(
-        (-text_bbox[0][:]).tolist(), text, fill=(0, 0, 0), font=font, align=alignment
-    )
+    xy = (-text_bbox[0][:]).tolist()
 
-    return text, alpha, font_size
+    # draw.text(xy, text, fill=(0, 0, 0), font=font, align=align)
+    line_offsets = draw_text_aligned(draw, xy, text, font, align, fill=(0, 0, 0))
 
-
-def render_text(
-    text: str,
-    font: ImageFont,
-    resolution: int,
-    text_aspect_ratio: float,
-    angle: int = 0,
-    padding: Tuple[int, int, int, int] = (0, 0, 0, 0),
-    alignment: str = "left",
-    font_color: Tuple[int, int, int] = (0, 0, 0),
-    background_color: Tuple[int, int, int] = (255, 255, 255),
-) -> Tuple[str, np.ndarray, Tuple[Tuple[int, int], Tuple[int, int]]]:
-    white = (255, 255, 255)
-
-    text, alpha, font_size = render_text_mask(
-        text, font, resolution, text_aspect_ratio, alignment
-    )
-
-    # rotate image
-    alpha = alpha.rotate(
-        angle, resample=Resampling.BICUBIC, expand=True, fillcolor=white
-    )
-    # to opencv
-    alpha = np.array(alpha)
-    # add padding
-    alpha = pad_image(alpha, padding, white[0])
-    # apply colors
-    img = apply_colors(font_color, background_color, alpha)
-
-    return text, img, alpha, font_size
+    return text, alpha, font_size, xy, line_offsets
 
 
 def is_char_supported_by_font(font: TTFont, char: str) -> bool:
@@ -150,21 +151,43 @@ def generate(text: str, font: ImageFont):
 
     text_rotation_angle = randint(-45, 45)
 
-    aspect_ratio = uniform(0.5, 2)
+    text_aspect_ratio = uniform(0.5, 2)
     padding = [randint(0, 64) for _ in range(4)]
     alignment = choice(["left", "center", "right"])
 
-    return (
-        *render_text(
-            text,
-            font,
-            512,
-            aspect_ratio,
+    resolution = 512
+    background_color = (255, 255, 255)
+
+    white = (255, 255, 255)
+
+    text, alpha, font_size, xy, line_offsets = render_text_mask(
+        text, font, resolution, text_aspect_ratio, alignment
+    )
+    resolution_before_rotation = alpha.size
+
+    # rotate image
+    alpha = np.array(
+        alpha.rotate(
             text_rotation_angle,
-            padding,
-            alignment,
-            font_color,
-        ),
+            resample=Resampling.BICUBIC,
+            expand=True,
+            fillcolor=white,
+        )
+    )
+
+    # add padding
+    alpha = pad_image(alpha, padding, white[0])
+    # apply colors
+    img = apply_colors(font_color, background_color, alpha)
+
+    return (
+        text,
+        img,
+        font_size,
+        xy,
+        line_offsets,
+        padding,
         font_color,
         text_rotation_angle,
+        resolution_before_rotation,
     )
