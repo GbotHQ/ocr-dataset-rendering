@@ -1,7 +1,6 @@
 assets/
 fonts_filter.ipynb
-main.ipynb
-colab.ipynb
+dev.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
