@@ -7,7 +7,7 @@ Generate and render annotated images with text on a virtual paper with folds and
 1. Clone the repository:
 
 ```
-git clone https://github.com/GbotHQ/ocr-dataset-rendering.git
+git clone --recursive https://github.com/GbotHQ/ocr-dataset-rendering.git
 ```
 
 2. Install the required packages:
