@@ -7,13 +7,13 @@ Generate and render annotated images with text on a virtual paper with folds and
 1. Clone the repository:
 
 ```
-git clone https://github.com/your_username/handwritten-ocr-dataset-rendering.git
+git clone https://github.com/GbotHQ/ocr-dataset-rendering.git
 ```
 
 2. Install the required packages:
 
 ```
-cd handwritten-ocr-dataset-rendering
+cd ocr-dataset-rendering
 pip install -r requirements.txt
 ```
 
