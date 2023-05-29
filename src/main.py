@@ -16,7 +16,9 @@ from postprocess import postprocess_samples
 
 
 def download_and_prepare_data():
-    download_path = pth("../assets/")
+    download_path = pth("../assets/").resolve()
+    if not download_path.is_dir():
+        download_path.mkdir(parents=True, exist_ok=True)
 
     print("Preparing text dataset...")
     _, texts_iter = get_text_dataset()
@@ -83,6 +85,9 @@ def main(
 
     if not blender_path.is_file():
         raise ValueError(f"Blender path {blender_path} is not a valid file")
+    
+    if not output_dir.is_dir():
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     blender_path = blender_path.resolve()
     output_dir = output_dir.resolve()
