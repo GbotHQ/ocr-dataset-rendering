@@ -29,7 +29,8 @@ cd ../
 
 example usage:
 ```
-python main.py --n_samples 2 --blender_path "C:/Program Files/Blender Foundation/Blender 3.4/blender.exe" --output_dir "$output_dir" --device "cpu" --resolution_x 512 --resolution_y 512 --compression_level 9
+mkdir ../output
+python main.py --n_samples 2 --blender_path "Blender_3D_document_rendering_pipeline/blender-3.4.0-linux-x64/blender" --output_dir ../output --device cpu --resolution_x 512 --resolution_y 512 --compression_level 9
 ```
 ```
 python main.py --help
