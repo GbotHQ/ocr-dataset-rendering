@@ -29,7 +29,7 @@ cd ../
 
 example usage:
 ```
-mkdir ../output
+rm -r ../output
 python main.py --n_samples 2 --blender_path "Blender_3D_document_rendering_pipeline/blender-3.4.0-linux-x64/blender" --output_dir ../output --device cpu --resolution_x 512 --resolution_y 512 --compression_level 9
 ```
 ```
