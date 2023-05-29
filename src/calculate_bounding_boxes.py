@@ -187,6 +187,15 @@ def bboxes_to_dict(
         bbox.points = (bbox.points / res)[:, ::-1]
     new_overall_bbox.points = (new_overall_bbox.points / res)[:, ::-1]
 
+    def make_tl_tr_br_bl(points):
+        return np.stack((points[0], points[3], points[2], points[1]), 0)
+
+    for bbox in new_char_bboxes:
+        bbox.points = make_tl_tr_br_bl(bbox.points)
+    for bbox in new_line_bboxes:
+        bbox.points = make_tl_tr_br_bl(bbox.points)
+    new_overall_bbox.points = make_tl_tr_br_bl(new_overall_bbox.points)
+
     axis_aligned_overall_bbox = np.stack(
         (np.amin(new_overall_bbox.points, 0), np.amax(new_overall_bbox.points, 0)), 0
     )
@@ -202,18 +211,22 @@ def bboxes_to_dict(
         "overall_bbox": new_overall_bbox.points.tolist(),
         "axis_aligned_overall_bbox": axis_aligned_overall_bbox.tolist(),
         "axis_aligned_overall_bbox_xxyy": axis_aligned_overall_bbox_xxyy,
-        "lines": dict.fromkeys(lines[k["line_index"]] for k in original_char_bboxes),
+        "lines": {},
     }
-    for i, k in enumerate(bounding_boxes["lines"]):
-        line_char_bboxes = [k for k in original_char_bboxes if k["line_index"] == i]
+    
+    for i in {k["line_index"] for k in original_char_bboxes}:
+        line_char_bboxes = [
+            (k[0]["char_index"], k[1].points.tolist())
+            for k in zip(original_char_bboxes, new_char_bboxes)
+            if k[0]["line_index"] == i
+        ]
         chars = {
-            text[k["char_index"]]: {
-                "char_index": k["char_index"],
-                "char_bbox": k["bbox"].points.tolist(),
-            }
+            text[k[0]]: {"char_index": k[0], "char_bbox": k[1]}
             for k in line_char_bboxes
         }
-        bounding_boxes["lines"][k] = {
+
+        line = lines[i]
+        bounding_boxes["lines"][line] = {
             "line_bbox": new_line_bboxes[i].points.tolist(),
             "chars": chars,
         }
