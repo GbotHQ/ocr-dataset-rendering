@@ -22,6 +22,7 @@ pip install -r requirements.txt
 ```
 cd src/Blender_3D_document_rendering_pipeline
 bash download_blender_binary.sh
+cd ../
 ```
 
 ## Usage
