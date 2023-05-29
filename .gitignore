@@ -2,6 +2,7 @@ assets/
 output/
 fonts_filter.ipynb
 dev.ipynb
+tests.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
