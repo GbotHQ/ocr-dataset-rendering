@@ -69,7 +69,7 @@ class TestFontRenderer:
             font_color,
             text_rotation_angle,
             resolution_before_rotation,
-        ) = generate(self.input_text, self.font)
+        ) = generate(self.input_text, self.font, 512)
 
         np.testing.assert_array_equal(img, self.img)
 

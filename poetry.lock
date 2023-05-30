@@ -1349,6 +1349,22 @@ numpy = [
 ]
 
 [[package]]
+name = "p-tqdm"
+version = "1.4.0"
+description = "Parallel processing with progress bars"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "p_tqdm-1.4.0.tar.gz", hash = "sha256:0d12aa223443f387244cce5e74a0aecc472d1f98189d58ccdfcda86772772bfc"},
+]
+
+[package.dependencies]
+pathos = ">=0.2.5"
+six = ">=1.13.0"
+tqdm = ">=4.45.0"
+
+[[package]]
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
@@ -1443,6 +1459,24 @@ files = [
 [package.extras]
 qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
 testing = ["docopt", "pytest (<6.0.0)"]
+
+[[package]]
+name = "pathos"
+version = "0.3.0"
+description = "parallel graph management and execution in heterogeneous computing"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pathos-0.3.0-py3-none-any.whl", hash = "sha256:b1f5a79b1c79a594330d451832642ee5bb61dd77dc75ba9e5c72087c77e8994c"},
+    {file = "pathos-0.3.0.tar.gz", hash = "sha256:24fa8db51fbd9284da8e191794097c4bb2aa3fce411090e57af6385e61b97e09"},
+]
+
+[package.dependencies]
+dill = ">=0.3.6"
+multiprocess = ">=0.70.14"
+pox = ">=0.3.2"
+ppft = ">=1.7.6.6"
 
 [[package]]
 name = "pathspec"
@@ -1594,6 +1628,33 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
+name = "pox"
+version = "0.3.2"
+description = "utilities for filesystem exploration and automated builds"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pox-0.3.2-py3-none-any.whl", hash = "sha256:56fe2f099ecd8a557b8948082504492de90e8598c34733c9b1fdeca8f7b6de61"},
+    {file = "pox-0.3.2.tar.gz", hash = "sha256:e825225297638d6e3d49415f8cfb65407a5d15e56f2fb7fe9d9b9e3050c65ee1"},
+]
+
+[[package]]
+name = "ppft"
+version = "1.7.6.6"
+description = "distributed and parallel python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "ppft-1.7.6.6-py3-none-any.whl", hash = "sha256:f355d2caeed8bd7c9e4a860c471f31f7e66d1ada2791ab5458ea7dca15a51e41"},
+    {file = "ppft-1.7.6.6.tar.gz", hash = "sha256:f933f0404f3e808bc860745acb3b79cd4fe31ea19a20889a645f900415be60f1"},
+]
+
+[package.extras]
+dill = ["dill (>=0.3.6)"]
 
 [[package]]
 name = "prompt-toolkit"
@@ -2592,4 +2653,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "819b3b0fa12d2bdfc67d54d56f49617a9f6820e62500ef78f6bdcbbafac92650"
+content-hash = "e7027c0c57a316f9602e7c3810d7855dc79e672cca33be4ee48b210ef00d2fce"

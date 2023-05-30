@@ -7,6 +7,7 @@ from pathlib import Path as pth
 
 import numpy as np
 import cv2 as cv
+from p_tqdm import p_umap
 
 from bounding_box import (
     SimpleBoundingBox,
@@ -78,18 +79,9 @@ def calculate_simple_bbox(
     return bbox, bbox_relative_xxyy
 
 
-def postprocess_sample(sample: SampleInfo):
-    bounding_boxes, _, _, _ = calculate_bounding_boxes(sample)
-
-    sample.bounding_boxes = bounding_boxes
-
-    # sample.gaussian_blur_radius = apply_random_gaussian_blur_to_sample(
-    #     sample.output_image_path, sample.compression_level
-    # )
-
-
 def postprocess_samples(samples: List[SampleInfo]):
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=multiprocessing.cpu_count()
-    ) as executor:
-        list(executor.map(postprocess_sample, samples))
+    bounding_boxes_list = p_umap(
+        calculate_bounding_boxes, samples, desc="Calculating bounding boxes"
+    )
+    for sample, bounding_boxes in zip(samples, bounding_boxes_list):
+        sample.bounding_boxes = bounding_boxes[0]

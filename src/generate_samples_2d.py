@@ -1,23 +1,21 @@
 from typing import Tuple, Union
 from random import random, choice
 from pathlib import Path as pth
-import concurrent.futures
 from shutil import rmtree
-import multiprocessing
 from io import BytesIO
 import threading
 import itertools
 import tempfile
 import re
+from functools import partial
 
-from tqdm import tqdm
+from p_tqdm import t_map, p_umap
 import numpy as np
 import cv2 as cv
 from fontTools.ttLib import TTFont
 from PIL import ImageFont
 
 from font_rendering import generate, is_text_supported_by_font
-from bounding_box import QuadBoundingBox
 from Blender_3D_document_rendering_pipeline.src import config
 
 
@@ -57,7 +55,6 @@ class SampleInfo:
         self.output_coordinates_path = output_coordinates_path
         self.compression_level = compression_level
         self.resolution_before_rotation = resolution_before_rotation
-
 
 
 def mkdir(path: pth):
@@ -126,9 +123,7 @@ def get_text_and_font(shuffled_text_dataset_iter, random_font_iter):
             continue
         break
 
-    font = ImageFont.truetype(BytesIO(font_file), 42)
-
-    return text, font, font_path
+    return text, font_path
 
 
 def write_config(
@@ -136,8 +131,8 @@ def write_config(
     device: str,
     root_dir: pth,
     output_dir: pth,
-    random_hdri_iter,
-    random_material_iter,
+    hdri_path,
+    material,
     output_image_resolution,
     compression_level: int,
     image_path,
@@ -146,21 +141,10 @@ def write_config(
     resolution = np.array(img.shape[:2], np.float32)
     paper_size = resolution[::-1] / np.mean(resolution) * 25
 
-    texture_types = ["albedo", "roughness", "displacement"]
-
-    with material_lock:
-        # use textures from a single material
-        # or combine textures from different materials for more diversity
-        material = (
-            next(random_material_iter)
-            # if random() < 0.2
-            # else {k: next(random_material_iter)[k] for k in texture_types}
-        )
-
     conf = config.Config(device, project_root=root_dir)
 
     with hdri_lock:
-        conf.hdri.texture_path = str(next(random_hdri_iter).resolve())
+        conf.hdri.texture_path = str(pth(hdri_path).resolve())
 
     assign_material_to_conf(material, conf)
 
@@ -189,6 +173,91 @@ def save_images(
     return image_path
 
 
+def generate_sample(
+    index: int,
+    text: str,
+    font_path: str,
+    material,
+    hdri_path,
+    root_dir,
+    output_dir,
+    image_dir,
+    config_dir,
+    text_render_resolution,
+    output_image_resolution,
+    device,
+    compression_level,
+) -> Union[SampleInfo, None]:
+    try:
+        with open(font_path, "rb") as f:
+            font_file = f.read()
+        font = ImageFont.truetype(BytesIO(font_file), 42)
+    except Exception as e:
+        print(f"Error while generating sample {index}: {e}")
+        return
+
+    # few fonts are be broken and will raise an exception
+    try:
+        (
+            text,
+            img,
+            font_size,
+            anchor,
+            line_offsets,
+            padding,
+            font_color,
+            text_rotation_angle,
+            resolution_before_rotation,
+        ) = generate(text, font, text_render_resolution)
+    except Exception as e:
+        print(f"Error while generating sample {index}: {e}")
+        return
+
+    sample_id = f"sample_{index:08d}"
+
+    image_path = save_images(img, image_dir, sample_id, compression_level)
+
+    config_path = config_dir / f"{sample_id}.json"
+
+    conf = write_config(
+        img,
+        device,
+        root_dir,
+        output_dir,
+        hdri_path,
+        material,
+        output_image_resolution,
+        compression_level,
+        image_path,
+        config_path,
+    )
+
+    out_dir = output_dir / f"{sample_id}"
+    out_image_path = out_dir / "image0001.png"
+    out_coordinates_path = out_dir / "coordinates0001.png"
+
+    resolution = img.shape[:2]
+
+    return SampleInfo(
+        text,
+        conf,
+        anchor,
+        line_offsets,
+        padding,
+        image_path,
+        font_path,
+        font_color,
+        font_size,
+        text_rotation_angle,
+        resolution,
+        output_image_resolution,
+        out_image_path,
+        out_coordinates_path,
+        compression_level,
+        resolution_before_rotation,
+    )
+
+
 def generate_samples(
     n_samples: int,
     device: str,
@@ -201,107 +270,78 @@ def generate_samples(
     random_hdri_iter,
     random_material_iter,
     shuffled_dataset_iter,
-    threading: bool = True,
+    multiprocessing: bool = True,
 ):
     root_dir = pth(root_dir)
     output_dir = pth(output_dir)
     config_dir = pth(config_dir)
 
     text_render_resolution = int(max(output_image_resolution))
-    
+
     image_dir = pth(tempfile.mkdtemp())
     print(image_dir)
 
     mkdir(config_dir)
 
-    def generate_sample(index: int) -> Union[SampleInfo, None]:
+    texts = []
+    font_paths = []
+    materials = []
+    hdris = []
+    while len(texts) < n_samples:
         try:
-            text, font, font_path = get_text_and_font(
-                shuffled_dataset_iter, random_font_iter
+            text, font_path = get_text_and_font(shuffled_dataset_iter, random_font_iter)
+
+            # use textures from a single material
+            # or combine textures from different materials for more diversity
+            material = (
+                next(random_material_iter)
+                # if random() < 0.2
+                # else {
+                #     k: next(random_material_iter)[k]
+                #     for k in ["albedo", "roughness", "displacement"]
+                # }
             )
+
+            hdri_path = next(random_hdri_iter)
+
+            texts.append(text)
+            font_paths.append(font_path)
+            materials.append(material)
+            hdris.append(hdri_path)
         except Exception as e:
-            print(f"Error while generating sample {index}: {e}")
-            return
+            print(e)
 
-        # few fonts are be broken and will raise an exception
-        try:
-            (
-                text,
-                img,
-                font_size,
-                anchor,
-                line_offsets,
-                padding,
-                font_color,
-                text_rotation_angle,
-                resolution_before_rotation,
-            ) = generate(text, font, text_render_resolution)
-        except Exception as e:
-            print(f"Error while generating sample {index}: {e}")
-            return
+    generate_sample_func = partial(
+        generate_sample,
+        root_dir=root_dir,
+        output_dir=output_dir,
+        image_dir=image_dir,
+        config_dir=config_dir,
+        text_render_resolution=text_render_resolution,
+        output_image_resolution=output_image_resolution,
+        device=device,
+        compression_level=compression_level,
+    )
 
-        sample_id = f"sample_{index:08d}"
-
-        image_path = save_images(img, image_dir, sample_id, compression_level)
-
-        config_path = config_dir / f"{sample_id}.json"
-
-        conf = write_config(
-            img,
-            device,
-            root_dir,
-            output_dir,
-            random_hdri_iter,
-            random_material_iter,
-            output_image_resolution,
-            compression_level,
-            image_path,
-            config_path,
+    if multiprocessing:
+        generated_samples = p_umap(
+            generate_sample_func,
+            range(len(texts)),
+            texts,
+            font_paths,
+            materials,
+            hdris,
+            desc="Generating 2D samples"
         )
-
-        out_dir = output_dir / f"{sample_id}"
-        out_image_path = out_dir / "image0001.png"
-        out_coordinates_path = out_dir / "coordinates0001.png"
-
-        resolution = img.shape[:2]
-
-        return SampleInfo(
-            text,
-            conf,
-            anchor,
-            line_offsets,
-            padding,
-            image_path,
-            font_path,
-            font_color,
-            font_size,
-            text_rotation_angle,
-            resolution,
-            output_image_resolution,
-            out_image_path,
-            out_coordinates_path,
-            compression_level,
-            resolution_before_rotation,
-        )
-
-    if threading:
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=multiprocessing.cpu_count()
-        ) as executor:
-            generated_samples = list(
-                tqdm(
-                    executor.map(generate_sample, range(n_samples)),
-                    total=n_samples,
-                    desc="Generating samples",
-                )
-            )
     else:
-        generated_samples = list(
-            tqdm(
-                map(generate_sample, range(n_samples)),
-                total=n_samples,
-                desc="Generating samples",
-            )
+        generated_samples = t_map(
+            generate_sample_func,
+            range(len(texts)),
+            texts,
+            font_paths,
+            materials,
+            hdris,
+            desc="Generating 2D samples"
         )
 
     # remove failed samples
