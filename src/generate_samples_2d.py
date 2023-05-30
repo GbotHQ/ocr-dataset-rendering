@@ -93,21 +93,13 @@ def break_up_samples(text_samples):
     return list(itertools.chain.from_iterable(text_samples))
 
 
-text_lock = threading.Lock()
-font_lock = threading.Lock()
-hdri_lock = threading.Lock()
-material_lock = threading.Lock()
-
-
 def get_text_and_font(shuffled_text_dataset_iter, random_font_iter):
     while True:
         # find a font that supports all characters in text
-        with text_lock:
-            text = next(shuffled_text_dataset_iter)["sentences"]
-            text = choice(break_up_sample(text))
+        text = next(shuffled_text_dataset_iter)["sentences"]
+        text = choice(break_up_sample(text))
         for _ in range(20):
-            with font_lock:
-                font_path = next(random_font_iter)
+            font_path = next(random_font_iter)
             with open(font_path, "rb") as f:
                 font_file = f.read()
             # few fonts are be broken and will raise an exception
@@ -143,8 +135,7 @@ def write_config(
 
     conf = config.Config(device, project_root=root_dir)
 
-    with hdri_lock:
-        conf.hdri.texture_path = str(pth(hdri_path).resolve())
+    conf.hdri.texture_path = str(pth(hdri_path).resolve())
 
     assign_material_to_conf(material, conf)
 
