@@ -206,6 +206,8 @@ def generate_samples(
     root_dir = pth(root_dir)
     output_dir = pth(output_dir)
     config_dir = pth(config_dir)
+
+    text_render_resolution = int(max(output_image_resolution))
     
     image_dir = pth(tempfile.mkdtemp())
     print(image_dir)
@@ -233,7 +235,7 @@ def generate_samples(
                 font_color,
                 text_rotation_angle,
                 resolution_before_rotation,
-            ) = generate(text, font)
+            ) = generate(text, font, text_render_resolution)
         except Exception as e:
             print(f"Error while generating sample {index}: {e}")
             return

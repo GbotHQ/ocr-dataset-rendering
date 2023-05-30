@@ -108,6 +108,7 @@ def calculate_render_bboxes(
     document_overall_bbox,
     coords_relative,
     coords_absolute,
+    resolution,
 ):
     labels_warped = map_coordinates(
         labels, np.rint(coords_absolute).astype(np.int32), cval=0
@@ -117,7 +118,7 @@ def calculate_render_bboxes(
         document_overall_bbox, document_img_shape, labels_warped != 0, coords_relative
     )
 
-    w, h = 512, 512
+    w, h = resolution
     reference_rect = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=np.float32) * (
         h - 1,
         w - 1,
@@ -256,6 +257,7 @@ def calculate_bounding_boxes(sample):
         document_overall_bbox,
         coords_relative,
         coords_absolute,
+        sample.output_image_resolution,
     )
 
     bounding_boxes = bboxes_to_dict(

@@ -143,7 +143,7 @@ def hls_to_int_rgb(hue: float, lightness: float, saturation: float):
     return np.floor(np.array(col, np.float32) * 255).astype(np.int32)
 
 
-def generate(text: str, font: ImageFont):
+def generate(text: str, font: ImageFont, resolution: int):
     hue, lightness, saturation = [random() for _ in range(3)]
     # make saturation curve steeper
     saturation = (saturation**2) * (3 - 2 * saturation)
@@ -155,7 +155,6 @@ def generate(text: str, font: ImageFont):
     padding = [randint(0, 64) for _ in range(4)]
     alignment = choice(["left", "center", "right"])
 
-    resolution = 512
     background_color = (255, 255, 255)
 
     white = (255, 255, 255)
