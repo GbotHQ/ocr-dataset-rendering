@@ -140,7 +140,6 @@ def main(
             "bboxes": k.bounding_boxes,
             "font_path": str(k.font_path),
             "font_color": k.font_color.tolist(),
-            "font_size": k.font_size,
             "text_rotation_angle": k.text_rotation_angle,
             "resolution": k.output_image_resolution,
         }
