@@ -257,6 +257,7 @@ def generate_samples(
     root_dir: pth,
     output_dir: pth,
     config_dir: pth,
+    image_dir: pth,
     random_font_iter,
     random_hdri_iter,
     random_material_iter,
@@ -266,11 +267,9 @@ def generate_samples(
     root_dir = pth(root_dir)
     output_dir = pth(output_dir)
     config_dir = pth(config_dir)
+    image_dir = pth(image_dir)
 
     text_render_resolution = int(max(output_image_resolution))
-
-    image_dir = pth(tempfile.mkdtemp())
-    print(f"Saving temporary images to: {image_dir}")
 
     mkdir(config_dir)
 

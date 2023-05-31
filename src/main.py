@@ -1,6 +1,7 @@
 from pathlib import Path as pth
 import json
 import tempfile
+from shutil import rmtree
 
 import fire
 
@@ -86,7 +87,7 @@ def main(
 
     if not blender_path.is_file():
         raise ValueError(f"Blender path {blender_path} is not a valid file")
-    
+
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -103,8 +104,13 @@ def main(
 
     root_dir = pth.cwd() / "Blender_3D_document_rendering_pipeline"
 
-    config_dir = pth(tempfile.mkdtemp())
-    print(f"Saving config files to: {config_dir}")
+    temp_dir = pth(tempfile.mkdtemp())
+    print(f"Saving temporary files to: {temp_dir}")
+
+    config_dir = temp_dir / "configs"
+    image_dir = temp_dir / "images"
+    config_dir.mkdir()
+    image_dir.mkdir()
 
     print("Generating samples...")
     generated_samples = generate_samples(
@@ -115,6 +121,7 @@ def main(
         root_dir=root_dir,
         output_dir=output_dir,
         config_dir=config_dir,
+        image_dir=image_dir,
         random_font_iter=fonts,
         random_hdri_iter=hdris,
         random_material_iter=materials,
@@ -140,6 +147,9 @@ def main(
 
         with open(k.output_image_path.with_suffix(".json"), "w") as f:
             json.dump(output_dict, f, indent=4)
+
+    print("Cleaning up temporary files...")
+    rmtree(temp_dir)
 
 
 if __name__ == "__main__":
