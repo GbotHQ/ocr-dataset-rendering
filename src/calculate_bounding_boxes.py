@@ -114,6 +114,9 @@ def calculate_render_bboxes(
         labels, np.rint(coords_absolute).astype(np.int32), cval=0
     )
 
+    if np.all(labels_warped == 0):
+        return None, None, None
+
     overall_bbox_remapped, _ = calculate_precise_bbox(
         document_overall_bbox, document_img_shape, labels_warped != 0, coords_relative
     )
@@ -260,6 +263,9 @@ def calculate_bounding_boxes(sample):
         coords_absolute,
         sample.output_image_resolution,
     )
+
+    if new_overall_bbox is None:
+        return None, None, None, None
 
     bounding_boxes = bboxes_to_dict(
         sample.text,

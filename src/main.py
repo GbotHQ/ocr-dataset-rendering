@@ -145,6 +145,13 @@ def main(
             "resolution": k.output_image_resolution,
         }
 
+        if k.bounding_boxes is None:
+            print(f"Failed to calculate bounding boxes for {k.text}! Skipping")
+            print(json.dumps(output_dict, indent=4))
+            sample_output_dir = k.output_image_path.parent
+            rmtree(sample_output_dir)
+            continue
+
         with open(k.output_image_path.with_suffix(".json"), "w") as f:
             json.dump(output_dict, f, indent=4)
 
