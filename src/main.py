@@ -1,5 +1,6 @@
 from pathlib import Path as pth
 import json
+import tempfile
 
 import fire
 
@@ -101,7 +102,9 @@ def main(
     texts, fonts, hdris, materials = download_and_prepare_data()
 
     root_dir = pth.cwd() / "Blender_3D_document_rendering_pipeline"
-    config_dir = root_dir / "config"
+
+    config_dir = pth(tempfile.mkdtemp())
+    print(f"Saving config files to: {config_dir}")
 
     print("Generating samples...")
     generated_samples = generate_samples(
@@ -120,7 +123,7 @@ def main(
 
     print("Rendering samples using Blender...")
     output_dir.mkdir(parents=True, exist_ok=True)
-    run_blender_command(blender_path, output_dir, device)
+    run_blender_command(blender_path, config_dir, output_dir, device)
 
     postprocess_samples(generated_samples)
 

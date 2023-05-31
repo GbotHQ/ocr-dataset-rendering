@@ -270,7 +270,7 @@ def generate_samples(
     text_render_resolution = int(max(output_image_resolution))
 
     image_dir = pth(tempfile.mkdtemp())
-    print(image_dir)
+    print(f"Saving temporary images to: {image_dir}")
 
     mkdir(config_dir)
 

@@ -11,13 +11,16 @@ def mkdir(path: pth):
 
 
 def run_blender_command(
-    blender_binary_path: Union[str, pth], output_dir: str, device: str
+    blender_binary_path: Union[str, pth],
+    config_dir: Union[str, pth],
+    output_dir: Union[str, pth],
+    device: str,
 ):
     if not pth(output_dir).is_dir():
         raise FileNotFoundError(
             f"Output directory {output_dir} does not exist, please create it first"
         )
-    
+
     out = subprocess.run(
         [
             str(blender_binary_path),
@@ -34,6 +37,8 @@ def run_blender_command(
             "--",
             "--cycles-device",
             device,
+            "--config_path",
+            str(config_dir),
         ],
         capture_output=True,
     )
