@@ -7,7 +7,7 @@ from pathlib import Path as pth
 
 import numpy as np
 import cv2 as cv
-from p_tqdm import p_umap
+from p_tqdm import p_map
 
 from bounding_box import (
     SimpleBoundingBox,
@@ -80,7 +80,7 @@ def calculate_simple_bbox(
 
 
 def postprocess_samples(samples: List[SampleInfo]):
-    bounding_boxes_list = p_umap(
+    bounding_boxes_list = p_map(
         calculate_bounding_boxes, samples, desc="Calculating bounding boxes"
     )
     for sample, bounding_boxes in zip(samples, bounding_boxes_list):

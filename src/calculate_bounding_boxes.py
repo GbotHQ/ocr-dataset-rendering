@@ -212,25 +212,26 @@ def bboxes_to_dict(
         "overall_bbox": new_overall_bbox.points.tolist(),
         "axis_aligned_overall_bbox": axis_aligned_overall_bbox.tolist(),
         "axis_aligned_overall_bbox_xxyy": axis_aligned_overall_bbox_xxyy,
-        "lines": {},
+        "lines": lines,
+        "line_bboxes": [],
+        "chars": [],
+        "char_idx": [],
+        "char_bboxes": [],
     }
     
     for i in {k["line_index"] for k in original_char_bboxes}:
-        line_char_bboxes = [
+        bounding_boxes["line_bboxes"].append(new_line_bboxes[i].points.tolist())
+    
+    for i in {k["line_index"] for k in original_char_bboxes}:
+        char_bboxes = [
             (k[0]["char_index"], k[1].points.tolist())
             for k in zip(original_char_bboxes, new_char_bboxes)
             if k[0]["line_index"] == i
         ]
-        chars = {
-            text[k[0]]: {"char_index": k[0], "char_bbox": k[1]}
-            for k in line_char_bboxes
-        }
-
-        line = lines[i]
-        bounding_boxes["lines"][line] = {
-            "line_bbox": new_line_bboxes[i].points.tolist(),
-            "chars": chars,
-        }
+        for k in char_bboxes:
+            bounding_boxes["chars"].append(text[k[0]])
+            bounding_boxes["char_idx"].append(k[0])
+            bounding_boxes["char_bboxes"].append(k[1])
 
     return bounding_boxes
 
