@@ -13,6 +13,14 @@ from shuffle_iter import ShuffleIterator, DatasetShuffleIterator
 zip_path = pth("../assets/")
 
 
+class DownloadError(IOError):
+    def __init__(self, *args):
+        super().__init__(*args)
+    
+    def __str__(self):
+        return f"Failed to download {super().__str__()}"
+
+
 class MultipleDatasetShuffleIterator:
     def __init__(self, datasets: list):
         self.dataset_shuffle_iterators = [DatasetShuffleIterator(k) for k in datasets]
