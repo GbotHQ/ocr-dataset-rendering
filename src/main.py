@@ -74,9 +74,6 @@ def download_and_prepare_data():
         "W0hGyCzB#-Gldvyt6uGt9D6iT8kDL-T4CKGNwIKD0Yc4jR2MAgxo"
     )
 
-    if not fonts_path.is_dir():
-        raise DownloadError("materials")
-
     fonts_iter = get_fonts(fonts_path)
     hdris_iter = get_hdris(hdris_path)
     materials_iter = get_materials(materials_path)
