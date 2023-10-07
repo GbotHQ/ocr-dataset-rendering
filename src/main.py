@@ -80,6 +80,7 @@ def download_and_prepare_data():
 
     return texts_iter, fonts_iter, hdris_iter, materials_iter
 
+
 def main(
     n_samples: int,
     blender_path: str,
@@ -191,3 +192,7 @@ def main(
 
     print("Cleaning up temporary files...")
     rmtree(temp_dir)
+
+
+if __name__ == "__main__":
+    fire.Fire(main)
