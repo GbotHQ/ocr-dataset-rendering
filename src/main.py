@@ -1,3 +1,25 @@
+from pathlib import Path as pth
+import json
+import tempfile
+from shutil import rmtree
+from typing import Union, Optional
+
+import fire
+
+from prepare_data import (
+    get_text_dataset,
+    gdrive_download_and_extract,
+    mega_download_and_extract,
+    get_hdris,
+    get_materials,
+    get_fonts,
+    DownloadError
+)
+from generate_samples_2d import generate_samples
+from blender_render_samples_3d import run_blender_command
+from postprocess import postprocess_samples
+
+
 def download_from_grdrive_or_mega(
     path: Union[str, pth],
     gdrive_file_id: str,
