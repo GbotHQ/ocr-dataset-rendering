@@ -5,12 +5,15 @@ import zipfile
 import itertools
 
 import gdown
+from mega import Mega
 
 from datasets import load_dataset
 from shuffle_iter import ShuffleIterator, DatasetShuffleIterator
 
 
 zip_path = pth("../assets/")
+mega = Mega()
+m = mega.login()
 
 
 class DownloadError(IOError):
@@ -46,18 +49,30 @@ def get_text_dataset():
     return datasets, shuffled_dataset_iters
 
 
-def gdrive_download_and_extract(path: Union[str, pth], file_id: str) -> pth:
+def _download_and_extract(download_fn, path: Union[str, pth]) -> pth:
     path = pth(path)
     zip_path = path.with_suffix(".zip")
 
     if not zip_path.is_file():
-        gdown.download(id=file_id, output=str(zip_path), quiet=False)
+        download_fn(zip_path)
 
     if not path.is_dir():
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(path)
 
     return path
+
+def gdrive_download_and_extract(path: Union[str, pth], file_id: str) -> pth:
+    def download_fn(zip_path: pth) -> None:
+        gdown.download(id=file_id, output=str(zip_path.resolve()), quiet=False)
+    
+    return _download_and_extract(download_fn, path)
+
+def mega_download_and_extract(path: Union[str, pth], file_id_and_key: str) -> pth:
+    def download_fn(zip_path: pth) -> None:
+        m.download_url(f"https://mega.nz/file/{file_id_and_key}", str(zip_path.parent.resolve()), str(zip_path.name))
+    
+    return _download_and_extract(download_fn, path)
 
 
 def get_hdris(hdris_dir: Union[str, pth]) -> ShuffleIterator:

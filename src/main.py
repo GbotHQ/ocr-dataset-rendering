@@ -2,19 +2,50 @@ from pathlib import Path as pth
 import json
 import tempfile
 from shutil import rmtree
+from typing import Union, Optional
 
 import fire
 
 from prepare_data import (
     get_text_dataset,
     gdrive_download_and_extract,
+    mega_download_and_extract,
     get_hdris,
     get_materials,
     get_fonts,
+    DownloadError
 )
 from generate_samples_2d import generate_samples
 from blender_render_samples_3d import run_blender_command
 from postprocess import postprocess_samples
+
+
+def download_from_grdrive_or_mega(
+    path: Union[str, pth],
+    gdrive_file_id: str,
+    mega_file_id_and_key: str,
+    desc: Optional[str]=None,
+) -> pth:
+    path = pth(path)
+    if desc is None:
+        desc = str(path.stem)
+
+    print(f"Downloading {desc}...")
+
+    # download from google drive, if failed, download from mega
+    try:
+        download_path = gdrive_download_and_extract(path, gdrive_file_id)
+        if not download_path.is_dir():
+            raise DownloadError(f"{desc} from Google Drive")
+    except Exception as e:
+        print(e)
+        print(f"Attempting to download {desc} from Mega.nz")
+
+        download_path = mega_download_and_extract(path, mega_file_id_and_key)
+        if not download_path.is_dir():
+            raise DownloadError(f"{desc} from Mega.nz")
+
+    return download_path
 
 
 def download_and_prepare_data():
@@ -25,17 +56,22 @@ def download_and_prepare_data():
     print("Preparing text dataset...")
     _, texts_iter = get_text_dataset()
 
-    print("Downloading fonts...")
-    fonts_path = gdrive_download_and_extract(
-        download_path / "fonts", "1-K8EE0QsXfxaAV-5uOE6lhTLGicRZbW2"
+    fonts_path = download_from_grdrive_or_mega(
+        download_path / "fonts",
+        "1-K8EE0QsXfxaAV-5uOE6lhTLGicRZbW2",
+        "itg2TKoJ#UCOEQqX7pPwAf9pguWVUuksX7orWtzK5n4SdI6CQqGc"
     )
-    print("Downloading hdris...")
-    hdris_path = gdrive_download_and_extract(
-        download_path / "hdris", "1BNCTqw5fenCK-D48-a7VQ234Aq3k45hu"
+
+    hdris_path = download_from_grdrive_or_mega(
+        download_path / "hdris",
+        "1BNCTqw5fenCK-D48-a7VQ234Aq3k45hu",
+        "D5YWQKgR#fFRHe-HpbCc7-yAm3h5zxbR905o1hkrxKJDvQOsGOKk"
     )
-    print("Downloading materials...")
-    materials_path = gdrive_download_and_extract(
-        download_path / "materials", "1-5dz5DMce-braCrhVIsqB58PvcyB6qyy"
+
+    materials_path = download_from_grdrive_or_mega(
+        download_path / "materials",
+        "1-5dz5DMce-braCrhVIsqB58PvcyB6qyy",
+        "W0hGyCzB#-Gldvyt6uGt9D6iT8kDL-T4CKGNwIKD0Yc4jR2MAgxo"
     )
 
     fonts_iter = get_fonts(fonts_path)
